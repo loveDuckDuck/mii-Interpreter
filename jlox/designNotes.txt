@@ -1,0 +1,12 @@
+the name of the language will be 
+also the extension need to be easy to understand and to type 
+
+argument to search : 
+If you can’t resist poking your foot into that
+hole, some keywords to get you started are
+“constant propagation”, “common
+subexpression elimination”, “loop invariant
+code motion”, “global value numbering”,
+“strength reduction”, “scalar replacement of
+aggregates”, “dead code elimination”, and
+“loop unrolling”
