@@ -1,0 +1,3 @@
+/home/anduck/Desktop/myJourneyWithTheInterpreter/studinC/studinHashTable/build/CMakeFiles/studinHashTable.dir
+/home/anduck/Desktop/myJourneyWithTheInterpreter/studinC/studinHashTable/build/CMakeFiles/edit_cache.dir
+/home/anduck/Desktop/myJourneyWithTheInterpreter/studinC/studinHashTable/build/CMakeFiles/rebuild_cache.dir
