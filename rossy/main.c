@@ -35,6 +35,7 @@ int main(int argc, char **argv)
 	mpc_parser_t *Expr = mpc_new("expr");
 	mpc_parser_t *Symbol = mpc_new("symbol");
 	mpc_parser_t *Sexpr = mpc_new("sexpr");
+	mpc_parser_t *Qexpr = mpc_new("qexpr");
 	mpc_parser_t *Rossy = mpc_new("rossy");
 
 	mpca_lang(MPCA_LANG_DEFAULT,
@@ -42,13 +43,17 @@ int main(int argc, char **argv)
 	integer 	:/-?[0-9]+/ ;                     			\
 	float 		: /-?[0-9]+\\.[0-9]+/ ;						\
     number   	:  <float> | <integer> ;              		\
-    symbol 		: '+' | '-' | '*' | '/' | '%' | '^'| \"min\" |  \"max\";  \
-	sexpr 		: '(' <expr>* ')'							\
-    expr     	: <number> | <symbol> <expr>  ;  			\
+    symbol 		: '+' | '-' | '*' | '/' | '%' | '^'			\
+				| \"list\" | \"head\" | \"tail\" | \"join\" \
+				| \"eval\" | \"cons\"|\"min\" |  \"max\";  			\
+	qexpr 		: '{' <expr>* '}'		;					\
+	sexpr 		: '(' <expr>* ')'		;					\
+    expr     	: <number> | <symbol> | <sexpr> | <qexpr> ;  		\
     rossy    	: /^/ <expr>* /$/ ;             			\
   	",
-			  Integer, Float, Number, Symbol, Sexpr, Expr, Rossy);
-	puts("Rossy Version 0.0.0.0.3");
+			  Integer, Float, Number, Symbol, Sexpr,Qexpr, Expr, Rossy);
+	
+	 puts("Rossy Version 0.0.0.0.3");
 	puts("Press Ctrl+C to Exit\n");
 
 	while (1)
@@ -60,11 +65,11 @@ int main(int argc, char **argv)
 		add_history(input);
 		/* Attempt to Parse the user Input*/
 		mpc_result_t r;
-		if (mpc_parse("stdin", input, Rossy, &r))
+		if (mpc_parse("<stdin>", input, Rossy, &r))
 		{
-			lval result = eval(r.output);
-			lval_println(result);
-			mpc_ast_delete(r.output);
+			lval* x =  lval_eval( lval_read(r.output));
+			lval_println(x);
+			lval_del(x);
 		}
 		else
 		{
@@ -75,6 +80,6 @@ int main(int argc, char **argv)
 		free(input);
 	}
 	/* Undefine and Delete our Parsers */
-	mpc_cleanup(7, Integer, Float, Number, Symbol, Sexpr, Expr, Rossy);
+	mpc_cleanup(7, Integer, Float, Number, Symbol, Sexpr,Qexpr, Expr, Rossy);
 	return 0;
 }
