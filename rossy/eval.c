@@ -84,7 +84,7 @@ lval *lval_eval_sexpr(lval *v)
 
 lval *lval_read(mpc_ast_t *t)
 {
-    printf("tag : %s\n", t->tag);
+    printf("tag : %s - children_num : %d - contents : %s\n", t->tag,t->children_num,t->contents);
     /* If Symbol or Number return conversion to that type */
     if (strstr(t->tag, "float") || strstr(t->tag, "integer"))
     {
@@ -105,7 +105,10 @@ lval *lval_read(mpc_ast_t *t)
     {
         x = lval_sexpr();
     }
-      if (strstr(t->tag, "qexpr"))  { x = lval_qexpr(); }
+    if (strstr(t->tag, "qexpr"))
+    {
+        x = lval_qexpr();
+    }
 
     /* Fill this list with any valid expression contained within */
     for (int i = 0; i < t->children_num; i++)
@@ -150,18 +153,42 @@ void lval_expr_print(lval *v, char open, char close)
     putchar(close);
 }
 
-
-
-lval* builtin(lval* a, char* func) {
-  if (strcmp("list", func) == 0) { return builtin_list(a); }
-  if (strcmp("head", func) == 0) { return builtin_head(a); }
-  if (strcmp("tail", func) == 0) { return builtin_tail(a); }
-  if (strcmp("join", func) == 0) { return builtin_join(a); }
-  if( strcmp("cons",func)==0){return builtin_cons(a);}
-  if (strcmp("eval", func) == 0) { return builtin_eval(a); }
-  if (strstr("+-/*", func)) { return builtin_op(a, func); }
-  lval_del(a);
-  return lval_err("Unknown Function!");
+lval *builtin(lval *a, char *func)
+{
+    if (strcmp("list", func) == 0)
+    {
+        return builtin_list(a);
+    }
+    if (strcmp("head", func) == 0)
+    {
+        return builtin_head(a);
+    }
+    if (strcmp("tail", func) == 0)
+    {
+        return builtin_tail(a);
+    }
+    if (strcmp("join", func) == 0)
+    {
+        return builtin_join(a);
+    }
+    if (strcmp("cons", func) == 0)
+    {
+        return builtin_cons(a);
+    }
+    if (strcmp("len", func) == 0)
+    {
+        return builtin_len(a);
+    }
+    if (strcmp("eval", func) == 0)
+    {
+        return builtin_eval(a);
+    }
+    if (strstr("+-/*", func))
+    {
+        return builtin_op(a, func);
+    }
+    lval_del(a);
+    return lval_err("Unknown Function!");
 }
 
 lval *builtin_op(lval *a, char *op)
@@ -325,16 +352,64 @@ lval *builtin_join(lval *a)
     return x;
 }
 
-lval *builtin_cons(lval *a  )
+lval *builtin_cons(lval *a)
 {
- return a;
+    // Verifica numero argomenti (2)
+    LASSERT(a, a->count == 2, "Function 'cons' passed wrong number of args!");
+    // Verifica che il secondo argomento sia una Q-Expression
+    LASSERT(a, a->cell[1]->type == LVAL_QEXPR, "Function 'cons' second argument must be a Q-Expression!");
+
+    // Estrae il valore da inserire (primo argomento)
+    lval *val = lval_pop(a, 0);
+    // Estrae la lista target (secondo argomento, ora diventato indice 0 dopo il pop)
+    lval *q = lval_pop(a, 0);
+
+    // Elimina il contenitore degli argomenti
+    lval_del(a);
+
+    // Logica di Prepend (inserimento in testa)
+    // 1. Incrementa il contatore
+    q->count++;
+    // 2. Rialloca la memoria per ospitare il nuovo elemento
+    q->cell = realloc(q->cell, sizeof(lval*) * q->count);
+    // 3. Sposta tutti gli elementi esistenti in avanti di una posizione
+    //    Sposta da &cell[0] a &cell[1] per (count-1) elementi
+    memmove(&q->cell[1], &q->cell[0], sizeof(lval*) * (q->count - 1));
+    // 4. Inserisce il nuovo valore in testa
+    q->cell[0] = val;
+
+    return q;
 }
 
-lval * lval_join(lval *x, lval*y)
+lval *builtin_len(lval *a)
 {
-    while(y->count)
+    // Verifica che ci sia esattamente 1 argomento
+    LASSERT(a, a->count == 1, "Function 'len' passed too many arguments!");
+    // Verifica che l'argomento sia una Q-Expression
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'len' passed incorrect type!");
+
+    // Estrae la Q-Expression
+    lval *q = lval_pop(a, 0);
+    
+    // Elimina il contenitore degli argomenti 'a' (non serve più)
+    lval_del(a);
+
+    // Salva il conteggio
+    long count = q->count;
+
+    // Elimina la Q-Expression (abbiamo estratto l'informazione che ci serviva)
+    lval_del(q);
+
+    // Restituisce il conteggio come nuovo lval numerico
+    return lval_num((float)count);
+
+}
+
+lval *lval_join(lval *x, lval *y)
+{
+    while (y->count)
     {
-        x = lval_add(x,lval_pop(y,0));
+        x = lval_add(x, lval_pop(y, 0));
     }
     lval_del(y);
     return x;
@@ -424,7 +499,7 @@ void lval_print(lval *v)
     switch (v->type)
     {
     case LVAL_NUM:
-        printf("%.2f", v->num);
+        printf("%.2f ", v->num);
         break;
     case LVAL_ERR:
         printf("Error: %s", v->err);

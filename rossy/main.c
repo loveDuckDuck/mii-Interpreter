@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     number   	:  <float> | <integer> ;              		\
     symbol 		: '+' | '-' | '*' | '/' | '%' | '^'			\
 				| \"list\" | \"head\" | \"tail\" | \"join\" \
-				| \"eval\" | \"cons\"|\"min\" |  \"max\";  			\
+				| \"eval\" | \"cons\"|\"len\"|\"min\" |  \"max\";  			\
 	qexpr 		: '{' <expr>* '}'		;					\
 	sexpr 		: '(' <expr>* ')'		;					\
     expr     	: <number> | <symbol> | <sexpr> | <qexpr> ;  		\
