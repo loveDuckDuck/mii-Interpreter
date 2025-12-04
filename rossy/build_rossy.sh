@@ -47,7 +47,7 @@ echo "------------------------------------------"
 echo "Compiling rossy program..."
 
 # The compilation command provided by the user:
-COMPILATION_CMD="gcc -std=c99 -Wall main.c mpc.c eval.c -ledit -lm -o rossy"
+COMPILATION_CMD="gcc -std=c99 -Wall main.c mpc.c eval.c env.c -ledit -lm -o rossy"
 
 if $COMPILATION_CMD; then
     echo "Compilation successful! Executable 'rossy' created. 🎉"

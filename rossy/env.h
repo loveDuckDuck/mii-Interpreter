@@ -1,0 +1,66 @@
+#ifndef EVAL_TYPES_H
+#define EVAL_TYPES_H
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "eval.h"
+
+
+/*
+    Struct lenv
+    is a simple struct that allow me to store all the variable and funtion on it
+    Each entry in one list has a corresponding entry in the other list at the same position.
+    so syms and vals are connected
+*/
+struct lenv
+{
+    int count;
+    char **syms;
+    lval **vals;
+};
+
+/*
+===================
+FUNCTION LENV
+===================
+*/
+lenv* lenv_new(void);
+void lenv_del(lenv* e);
+
+lval* lenv_get(lenv* e, lval* k);
+void lenv_put(lenv* e, lval* k, lval* v);
+
+void lenv_add_builtin(lenv* e, char* name, lbuiltin func);
+void lenv_add_builtins(lenv* e);
+
+/*
+===================
+DEFINE THE BUILTIN FUNCTION
+===================
+*/
+lval *builtin(lenv *e,lval *a, char *func);
+
+lval *builtin_op(lenv *e, lval *a, char *op);
+
+
+lval *builtin_head(lenv* e,lval *a);
+lval *builtin_tail(lenv* e,lval *a);
+lval *builtin_list(lenv* e,lval *a);
+lval *builtin_join(lenv* e,lval *a);
+lval *builtin_cons(lenv* e,lval *a);
+lval *builtin_len(lenv* e,lval *a);
+
+
+lval* builtin_add(lenv* e, lval* a);
+lval* builtin_sub(lenv* e, lval* a);
+lval* builtin_mul(lenv* e, lval* a);
+lval* builtin_div(lenv* e, lval* a);
+
+lval * lval_join(lval *x, lval*y);
+lval *builtin_eval(lenv* e,lval *a);
+
+lval* builtin_def(lenv* e, lval* a);
+
+#endif

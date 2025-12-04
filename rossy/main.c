@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "mpc.h"
 #include "eval.h"
-
+#include "env.h"
 /*If were are on a Windows machine compile these function*/
 #ifdef _WIN32
 #include <string.h>
@@ -43,18 +43,19 @@ int main(int argc, char **argv)
 	integer 	:/-?[0-9]+/ ;                     			\
 	float 		: /-?[0-9]+\\.[0-9]+/ ;						\
     number   	:  <float> | <integer> ;              		\
-    symbol 		: '+' | '-' | '*' | '/' | '%' | '^'			\
-				| \"list\" | \"head\" | \"tail\" | \"join\" \
-				| \"eval\" | \"cons\"|\"len\"|\"min\" |  \"max\";  			\
+    symbol 		: /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/ ; 		\
 	qexpr 		: '{' <expr>* '}'		;					\
 	sexpr 		: '(' <expr>* ')'		;					\
-    expr     	: <number> | <symbol> | <sexpr> | <qexpr> ;  		\
+    expr     	: <number> | <symbol> | <sexpr> | <qexpr> ;	\
     rossy    	: /^/ <expr>* /$/ ;             			\
   	",
 			  Integer, Float, Number, Symbol, Sexpr,Qexpr, Expr, Rossy);
 	
-	 puts("Rossy Version 0.0.0.0.3");
+	puts("Rossy Version 0.0.0.0.3");
 	puts("Press Ctrl+C to Exit\n");
+
+	lenv* e = lenv_new();
+	lenv_add_builtins(e);
 
 	while (1)
 	{
@@ -67,9 +68,11 @@ int main(int argc, char **argv)
 		mpc_result_t r;
 		if (mpc_parse("<stdin>", input, Rossy, &r))
 		{
-			lval* x =  lval_eval( lval_read(r.output));
+			lval* x =  lval_eval(e,lval_read(r.output));
 			lval_println(x);
 			lval_del(x);
+
+			mpc_ast_delete(r.output);
 		}
 		else
 		{
