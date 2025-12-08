@@ -9,16 +9,23 @@ lval *lval_num(float x)
     return v;
 }
 
-
 /* Create a new error type lval */
-lval *lval_err(char *m)
+lval *lval_err(char *fmt, ...)
 {
     lval *v = malloc(sizeof(lval));
     v->type = LVAL_ERR;
-    v->err = malloc(strlen(m) + 1);
-    strcpy(v->err, m);
+    va_list va;
+    va_start(va, fmt);
+
+    v->err = malloc(512);
+
+    vsnprintf(v->err, 511, fmt, va);
+    v->err = realloc(v->err, strlen(v->err) + 1);
+    va_end(va);
+
     return v;
 }
+
 lval *lval_sym(char *s)
 {
     lval *v = malloc(sizeof(lval));
@@ -176,7 +183,6 @@ lval *lval_copy(lval *v)
     return x;
 }
 
-
 lval *lval_read_num(mpc_ast_t *t)
 {
     errno = 0;
@@ -184,12 +190,12 @@ lval *lval_read_num(mpc_ast_t *t)
     return errno != ERANGE ? lval_num(x) : lval_err("invalid number");
 }
 
-lval *lval_eval(lenv *e,lval *v)
+lval *lval_eval(lenv *e, lval *v)
 {
 
-    if(v->type == LVAL_SYM)
+    if (v->type == LVAL_SYM)
     {
-        lval *x = lenv_get(e,v);
+        lval *x = lenv_get(e, v);
         lval_del(v);
         return x;
     }
@@ -197,7 +203,7 @@ lval *lval_eval(lenv *e,lval *v)
     /* Evaluate Sexpressions */
     if (v->type == LVAL_SEXPR)
     {
-        return lval_eval_sexpr(e,v);
+        return lval_eval_sexpr(e, v);
     }
     /* All other lval types remain the same */
     return v;
@@ -227,12 +233,12 @@ lval *lval_take(lval *v, int i)
     return x;
 }
 
-lval *lval_eval_sexpr(lenv*e, lval *v)
+lval *lval_eval_sexpr(lenv *e, lval *v)
 {
     /* Evaluate Children */
     for (int i = 0; i < v->count; ++i)
     {
-        v->cell[i] = lval_eval(e,v->cell[i]);
+        v->cell[i] = lval_eval(e, v->cell[i]);
     }
     /*Emrpty expression*/
     if (v->count == 0)
@@ -254,7 +260,7 @@ lval *lval_eval_sexpr(lenv*e, lval *v)
         return lval_err("S-expression Does not start with symbol!");
     }
 
-  /* If so call function to get result */
+    /* If so call function to get result */
     lval *result = f->fun(e, v);
     lval_del(f);
     return result;
@@ -313,9 +319,23 @@ lval *lval_add(lval *v, lval *x)
     return v;
 }
 
-
-
-
-
-
-
+char *ltype_name(int t)
+{
+    switch (t)
+    {
+    case LVAL_FUN:
+        return "Function";
+    case LVAL_NUM:
+        return "Number";
+    case LVAL_ERR:
+        return "Error";
+    case LVAL_SYM:
+        return "Symbol";
+    case LVAL_SEXPR:
+        return "S-Expression";
+    case LVAL_QEXPR:
+        return "Q-Expression";
+    default:
+        return "Unknown";
+    }
+}

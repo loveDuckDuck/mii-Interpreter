@@ -9,8 +9,7 @@ typedef struct lval lval;
 struct lenv;
 typedef struct lenv lenv;
 
-
-/*  functr to a funciton with return a lval pointer 
+/*  functr to a funciton with return a lval pointer
     and take in input the enviroaomente and and lval*/
 typedef lval *(*lbuiltin)(lenv *, lval *);
 
@@ -33,7 +32,6 @@ enum LVAL_TYPES_ERRORS
     LERR_BAD_NUM
 };
 
-
 struct lval
 {
     int type;
@@ -47,16 +45,16 @@ struct lval
     struct lval **cell;
 };
 
-#define LASSERT(args, cond, err) \
-    if (!(cond))                 \
-    {                            \
-        lval_del(args);          \
-        return lval_err(err);    \
+#define LASSERT(args, cond, fmt, ...)             \
+    if (!(cond))                                  \
+    {                                             \
+        lval *err = lval_err(fmt, ##__VA_ARGS__); \
+        lval_del(args);                           \
+        return err;                               \
     }
 
-
-/* 
-    Declare New lval Struct 
+/*
+    Declare New lval Struct
     lval = LispValue
 */
 lval eval(mpc_ast_t *t);
@@ -64,7 +62,7 @@ lval eval(mpc_ast_t *t);
 /* Create a new number type lval */
 lval *lval_num(float x);
 /* Create a new error type lval */
-lval *lval_err(char *m);
+lval *lval_err(char *fmt, ...);
 
 /* Create a new symbol type lval */
 lval *lval_sym(char *s);
@@ -79,20 +77,16 @@ lval *lval_fun(lbuiltin func);
 
 lval eval_op(lval x, char *op, lval y);
 
-
-
-
 /*funciton to evaluteed the sexpression*/
 lval *lval_eval_sexpr(lenv *e, lval *v);
 
-
-lval* lval_pop(lval* v, int i);
-lval* lval_take(lval* v, int i);
+lval *lval_pop(lval *v, int i);
+lval *lval_take(lval *v, int i);
 
 lval *lval_add(lval *v, lval *x);
 lval *lval_read(mpc_ast_t *t);
 
-lval* lval_eval(lenv *e,lval* v) ;
+lval *lval_eval(lenv *e, lval *v);
 
 /*
 ===================
@@ -112,8 +106,9 @@ void lval_expr_print(lval *v, char open, char close);
 /* Delete an "lval" */
 void lval_del(lval *v);
 
-
 /*use this forward declaration to avoid to get the circular dependency*/
-lval* lenv_get(lenv* e, lval* k);
+lval *lenv_get(lenv *e, lval *k);
+
+char* ltype_name(int t);
 
 #endif
