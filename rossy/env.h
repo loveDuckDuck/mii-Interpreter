@@ -28,6 +28,7 @@ FUNCTION LENV
 */
 lenv* lenv_new(void);
 void lenv_del(lenv* e);
+lenv *lenv_copy(lenv *e);
 
 lval* lenv_get(lenv* e, lval* k);
 void lenv_put(lenv* e, lval* k, lval* v);
@@ -57,10 +58,13 @@ lval* builtin_add(lenv* e, lval* a);
 lval* builtin_sub(lenv* e, lval* a);
 lval* builtin_mul(lenv* e, lval* a);
 lval* builtin_div(lenv* e, lval* a);
+// If I return a nullptr
+lval* builtin_exit(lenv* e, lval* a);
+
 
 lval * lval_join(lval *x, lval*y);
 lval *builtin_eval(lenv* e,lval *a);
 
 lval* builtin_def(lenv* e, lval* a);
-
+lval* builtin_lambda(lenv* e, lval* a);
 #endif

@@ -57,7 +57,7 @@ lval *lval_fun(lbuiltin func)
 {
     lval *v = malloc(sizeof(lval));
     v->type = LVAL_FUN;
-    v->fun = func;
+    v->builtin = func;
     return v;
 }
 
@@ -91,6 +91,12 @@ void lval_del(lval *v)
         free(v->cell);
         break;
     case LVAL_FUN:
+        if (!v->builtin)
+        {
+            lenv_del(v->env);
+            lval_del(v->formals);
+            lval_del(v->body);
+        }
         break;
     }
 
@@ -118,7 +124,19 @@ void lval_print(lval *v)
         lval_expr_print(v, '{', '}');
         break;
     case LVAL_FUN:
-        printf("<function>");
+        if (v->builtin)
+        {
+            printf("<builtin>");
+        }
+        else
+        {
+            printf("(\\ ");
+            lval_print(v->formals);
+            putchar(' ');
+            lval_print(v->body);
+            putchar(')');
+        }
+
         break;
     }
 }
@@ -157,7 +175,19 @@ lval *lval_copy(lval *v)
         x->num = v->num;
         break;
     case LVAL_FUN:
-        x->fun = v->fun;
+
+        if (v->builtin)
+        {
+            x->builtin = v->builtin;
+        }
+        else
+        {
+            x->builtin = NULL;
+            x->env = lenv_copy(v->env);
+            x->body = lval_copy(v->body);
+            x->formals = lval_copy(v->formals);
+        }
+
         break;
     case LVAL_SYM:
         x->sym = malloc(strlen(v->sym) + 1);
@@ -261,14 +291,14 @@ lval *lval_eval_sexpr(lenv *e, lval *v)
     }
 
     /* If so call function to get result */
-    lval *result = f->fun(e, v);
+    lval *result = f->builtin(e, v);
     lval_del(f);
     return result;
 }
 
 lval *lval_read(mpc_ast_t *t)
 {
-    printf("tag : %s - children_num : %d - contents : %s\n", t->tag, t->children_num, t->contents);
+    printf("tag : %s\n", t->tag);
     /* If Symbol or Number return conversion to that type */
     if (strstr(t->tag, "float") || strstr(t->tag, "integer"))
     {
@@ -338,4 +368,16 @@ char *ltype_name(int t)
     default:
         return "Unknown";
     }
+}
+lval *lval_lambda(lval *formals, lval *body)
+{
+
+    lval *v = malloc(sizeof(lval));
+    v->type = LVAL_FUN;
+    v->builtin = NULL;
+
+    v->env = lenv_new();
+    v->formals = formals;
+    v->body = body;
+    return v;
 }

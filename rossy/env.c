@@ -58,6 +58,22 @@ void lenv_put(lenv *e, lval *k, lval *v)
     strcpy(e->syms[e->count - 1], k->sym);
 }
 
+lenv *lenv_copy(lenv *e)
+{
+    lenv *n = malloc(sizeof(lenv));
+    //n->par = e->par;
+    n->count = e->count;
+    n->syms = malloc(sizeof(char *) * n->count);
+    n->vals = malloc(sizeof(lval *) * n->count);
+    for (int i = 0; i < e->count; i++)
+    {
+        n->syms[i] = malloc(strlen(e->syms[i]) + 1);
+        strcpy(n->syms[i], e->syms[i]);
+        n->vals[i] = lval_copy(e->vals[i]);
+    }
+    return n;
+}
+
 void lenv_add_builtin(lenv *e, char *name, lbuiltin func)
 {
     lval *k = lval_sym(name);
@@ -66,6 +82,17 @@ void lenv_add_builtin(lenv *e, char *name, lbuiltin func)
     lval_del(k);
     lval_del(v);
 }
+lval *builtin_exit(lenv* e, lval* a)
+{
+    // lenv_del(e);
+    // lval_del(a);
+
+    printf("go out");
+    exit(EXIT_SUCCESS);
+    return NULL;
+}
+
+
 void lenv_add_builtins(lenv *e)
 {
     lenv_add_builtin(e, "list", builtin_list);
@@ -81,6 +108,8 @@ void lenv_add_builtins(lenv *e)
     lenv_add_builtin(e, "*", builtin_mul);
     lenv_add_builtin(e, "/", builtin_div);
     lenv_add_builtin(e, "def", builtin_def);
+    lenv_add_builtin(e, "\\", builtin_lambda);
+    lenv_add_builtin(e, "exit",builtin_exit);
 }
 
 /*
@@ -248,8 +277,11 @@ lval *builtin_head(lenv *e, lval *a)
 {
     /* Check Error Conditions */
     LASSERT(a, a->count == 1, "Function 'head' passed too many arguments!");
-    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'head' passed incorrect types!");
-    LASSERT(a, a->cell[0]->type != 0, "Function 'head' passed {}!");
+    LASSERT(a, a->cell[0]->type == LVAL_QEXPR, "Function 'head' passed incorrect types!",
+            "Got %s , Expected",
+            ltype_name(a->cell[0]->type),
+            ltype_name(a->cell[1]->type));
+    LASSERT(a, a->cell[0]->type != 0, ltype_name(LVAL_QEXPR));
 
     /* Otherwise take first argument */
     lval *v = lval_take(a, 0);
@@ -388,4 +420,27 @@ lval *builtin_def(lenv *e, lval *a)
 
     lval_del(a);
     return lval_sexpr();
+}
+
+lval *builtin_lambda(lenv *e, lval *v)
+{
+    /* Check Two arguments, each of which are Q-Expressions */
+    // TODO 
+    //LASSERT_NUM("\\", v, 2);
+    //LASSERT_TYPE("\\", v, 0, LVAL_QEXPR);
+    //LASSERT_TYPE("\\", v, 1, LVAL_QEXPR);
+
+    /* Check first Q-Expression contains only Symbols */
+    for (int i = 0; i < v->cell[0]->count; i++)
+    {
+        LASSERT(v, (v->cell[0]->cell[i]->type == LVAL_SYM),
+                "Cannot define non-symbol. Got %s, Expected %s.",
+                ltype_name(v->cell[0]->cell[i]->type), ltype_name(LVAL_SYM));
+    }
+    /* Pop first two arguments and pass them to lval_lambda */
+    lval *formals = lval_pop(v, 0);
+    lval *body = lval_pop(v, 0);
+    lval_del(v);
+
+    return lval_lambda(formals, body);
 }
