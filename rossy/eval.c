@@ -285,13 +285,17 @@ lval *lval_eval_sexpr(lenv *e, lval *v)
     lval *f = lval_pop(v, 0);
     if (f->type != LVAL_FUN)
     {
+        lval *err = lval_err(
+            "S-Expression starts with incorrect type. "
+            "Got %s, Expected %s.",
+            ltype_name(f->type), ltype_name(LVAL_FUN));
         lval_del(f);
         lval_del(v);
-        return lval_err("S-expression Does not start with symbol!");
+        return err;
     }
 
     /* If so call function to get result */
-    lval *result = f->builtin(e, v);
+    lval* result = lval_call(e, f, v);
     lval_del(f);
     return result;
 }

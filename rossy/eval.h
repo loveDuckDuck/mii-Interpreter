@@ -39,18 +39,15 @@ struct lval
     float num;
     char *err;
     char *sym;
-    
-    
+
     /* Function */
     lbuiltin builtin;
     // where i store it in my enviorament
     lenv *env;
     // list of arguments which our function take in input
-    lval *formals; 
+    lval *formals;
     // structure of our function, literraly what it do
     lval *body;
-
-
 
     int count;
     struct lval **cell;
@@ -64,11 +61,23 @@ struct lval
         return err;                               \
     }
 
-#define LASSERT_NUM(args, v, num) \
 
 
+#define LASSERT_TYPE(func, args, index, expect)                     \
+    LASSERT(args, args->cell[index]->type == expect,                \
+            "Function '%s' passed incorrect type for argument %i. " \
+            "Got %s, Expected %s.",                                 \
+            func, index, ltype_name(args->cell[index]->type), ltype_name(expect))
 
+#define LASSERT_NUM(func, args, num)                               \
+    LASSERT(args, args->count == num,                              \
+            "Function '%s' passed incorrect number of arguments. " \
+            "Got %i, Expected %i.",                                \
+            func, args->count, num)                 
 
+#define LASSERT_NOT_EMPTY(func, args, index)     \
+    LASSERT(args, args->cell[index]->count != 0, \
+            "Function '%s' passed {} for argument %i.", func, index);
 /*
     Declare New lval Struct
     lval = LispValue
@@ -91,10 +100,9 @@ lval *lval_qexpr(void);
 lval *lval_fun(lbuiltin func);
 
 /* Create our lambda function*/
-lval* lval_lambda(lval* formals, lval* body);
+lval *lval_lambda(lval *formals, lval *body);
 
-
-
+lval *lval_call(lenv *e, lval *f, lval *a);
 
 lval eval_op(lval x, char *op, lval y);
 
@@ -127,14 +135,14 @@ void lval_expr_print(lval *v, char open, char close);
 /* Delete an "lval" */
 void lval_del(lval *v);
 
-char* ltype_name(int t);
+char *ltype_name(int t);
 
 /*use this forward declaration to avoid to get the circular dependency*/
 lval *lenv_get(lenv *e, lval *k);
-lenv* lenv_new(void);
-void lenv_del(lenv* e);
+lenv *lenv_new(void);
+void lenv_del(lenv *e);
 lenv *lenv_copy(lenv *e);
-
-
+void lenv_put(lenv *e, lval *k, lval *v);
+void lenv_def(lenv *e, lval *k, lval *v);
 
 #endif
